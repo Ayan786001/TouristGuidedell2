@@ -1,0 +1,43 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+
+    - name: Cache Maven packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Build with Maven
+      run: mvn clean install
+
+    - name: Run Unit Tests
+      run: mvn test
+
+    - name: Static Code Analysis with Qodana
+      uses: JetBrains/qodana-action@v2024.1
+      with:
+        qodana-cache: '~/.qodana'
+        report-dir: './qodana-report'
+      # You can adjust the options to customize how Qodana runs.
