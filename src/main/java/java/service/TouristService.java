@@ -32,23 +32,21 @@ public class TouristService {
         repository.addAttraction(attraction);
     }
 
-    // Update an existing tourist attraction by name
     public boolean updateAttraction(String name, TouristAttraction updatedAttraction) {
         return repository.updateAttraction(name, updatedAttraction);
     }
 
-    // Delete a tourist attraction by name
     public boolean deleteAttraction(String name) {
         return repository.deleteAttraction(name);
     }
-
-    // Get a list of distinct cities from all tourist attractions
-    public List<String> getCities() {
+}
+   /* public List<String> getCities() {
         return repository.getCities();
     }
 
-    public List<String> getTags() {
+  /*  public List<String> getTags() {
         return repository.getTags();
     }
 
-}
+
+    */

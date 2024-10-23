@@ -1,69 +1,53 @@
 package java.com.example.turistguidedel2.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.model.TouristAttraction;
-import java.service.TouristService;
+import java.repository.TouristRepository;
+
 import java.util.List;
 import java.util.Optional;
 
-@Controller
-@RequestMapping("/attractions")
+@RestController
+@RequestMapping("/api/attractions")
 public class TouristController {
 
-    private final TouristService touristService;
+    private final TouristRepository touristRepository;
 
     @Autowired
-    public TouristController(TouristService touristService) {
-        this.touristService = touristService;
+    public TouristController(TouristRepository touristRepository) {
+        this.touristRepository = touristRepository;
     }
 
     @GetMapping
-    public String getAllAttractions(Model model) {
-        List<TouristAttraction> attractions = touristService.getAllAttractions();
-        model.addAttribute("attractions", attractions);
-        return "attractionList";  // Thymeleaf template 'attractionList.html'
+    public List<TouristAttraction> getAllAttractions() {
+        return touristRepository.getAllAttractions();
     }
 
-    @GetMapping("/{name}/tags")
-    public String getAttractionTags(@PathVariable String name, Model model) {
-        Optional<TouristAttraction> attraction = touristService.getAttractionByName(name);
-        attraction.ifPresent(attractionValue -> model.addAttribute("attraction", attractionValue));
-        return attraction.isPresent() ? "tags" : "redirect:/attractions";
+    @GetMapping("/{name}")
+    public ResponseEntity<TouristAttraction> getAttractionByName(@PathVariable String name) {
+        Optional<TouristAttraction> attraction = touristRepository.getAttractionByName(name);
+        return attraction.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    @GetMapping("/add")
-    public String addAttractionForm(Model model) {
-        model.addAttribute("touristAttraction", new TouristAttraction());
-        model.addAttribute("cities", touristService.getCities());
-        return "addAttraction";
+    @PostMapping
+    public ResponseEntity<Void> addAttraction(@RequestBody TouristAttraction attraction) {
+        touristRepository.addAttraction(attraction);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/save")
-    public String saveAttraction(@ModelAttribute TouristAttraction attraction) {
-        touristService.addAttraction(attraction);
-        return "redirect:/attractions";
+    @PutMapping("/{name}")
+    public ResponseEntity<Void> updateAttraction(@PathVariable String name, @RequestBody TouristAttraction updatedAttraction) {
+        boolean updated = touristRepository.updateAttraction(name, updatedAttraction);
+        return updated ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @GetMapping("/{name}/edit")
-    public String editAttractionForm(@PathVariable String name, Model model) {
-        Optional<TouristAttraction> attraction = touristService.getAttractionByName(name);
-        attraction.ifPresent(attractionValue -> model.addAttribute("touristAttraction", attractionValue));
-        return attraction.isPresent() ? "editAttraction" : "redirect:/attractions";
-    }
-
-    @PostMapping("/update")
-    public String updateAttraction(@ModelAttribute TouristAttraction attraction) {
-        touristService.updateAttraction(attraction.getName(), attraction);
-        return "redirect:/attractions";
-    }
-
-    @GetMapping("/{name}/delete")
-    public String deleteAttraction(@PathVariable String name) {
-        touristService.deleteAttraction(name);
-        return "redirect:/attractions";
+    @DeleteMapping("/{name}")
+    public ResponseEntity<Void> deleteAttraction(@PathVariable String name) {
+        boolean deleted = touristRepository.deleteAttraction(name);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

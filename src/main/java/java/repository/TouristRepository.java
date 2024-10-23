@@ -1,65 +1,61 @@
 package java.repository;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
 import java.model.TouristAttraction;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.model.Location;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class TouristRepository {
 
-    private final List<TouristAttraction> attractions = new ArrayList<>();
+    private final JdbcTemplate jdbcTemplate;
 
-    public TouristRepository() {
-        attractions.add(new TouristAttraction("Tivoli Gardens", "Copenhagen, Denmark", 4.5, Arrays.asList("Family", "Amusement")));
-        attractions.add(new TouristAttraction("The Little Mermaid", "Copenhagen, Denmark", 4.2, Arrays.asList("Historical", "Sculpture")));
+    @Autowired
+    public TouristRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<TouristAttraction> getAllAttractions() {
-        return attractions;
+        String sql = "SELECT ta.id, ta.name, ta.description, ta.entry_fee, l.id AS location_id, l.city, l.country " +
+                "FROM TouristAttraction ta JOIN Location l ON ta.location_id = l.id";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new TouristAttraction(
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("entry_fee"),
+                new Location(rs.getInt("location_id"), rs.getString("city"), rs.getString("country"))
+        ));
     }
 
     public Optional<TouristAttraction> getAttractionByName(String name) {
-        return attractions.stream()
-                .filter(attraction -> attraction.getName().equalsIgnoreCase(name))
-                .findFirst();
+        String sql = "SELECT ta.id, ta.name, ta.description, ta.entry_fee, l.id AS location_id, l.city, l.country " +
+                "FROM TouristAttraction ta JOIN Location l ON ta.location_id = l.id WHERE ta.name = ?";
+        return jdbcTemplate.query(sql, new Object[]{name}, (rs, rowNum) -> new TouristAttraction(
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("entry_fee"),
+                new Location(rs.getInt("location_id"), rs.getString("city"), rs.getString("country"))
+        )).stream().findFirst();
     }
 
     public void addAttraction(TouristAttraction attraction) {
-        attractions.add(attraction);
+        String sql = "INSERT INTO TouristAttraction (name, description, entry_fee, location_id) VALUES (?, ?, ?, ?)";
+        jdbcTemplate.update(sql, attraction.getName(), attraction.getDescription(), attraction.getEntryFee(), attraction.getLocation().getId());
     }
 
     public boolean updateAttraction(String name, TouristAttraction updatedAttraction) {
-        Optional<TouristAttraction> attractionOpt = getAttractionByName(name);
-        if (attractionOpt.isPresent()) {
-            TouristAttraction attraction = attractionOpt.get();
-            attraction.setLocation(updatedAttraction.getLocation());
-            attraction.setRating(updatedAttraction.getRating());
-            attraction.setTags(updatedAttraction.getTags());
-            return true;
-        }
-        return false;
+        String sql = "UPDATE TouristAttraction SET description = ?, entry_fee = ?, location_id = ? WHERE name = ?";
+        int rowsAffected = jdbcTemplate.update(sql, updatedAttraction.getDescription(), updatedAttraction.getEntryFee(), updatedAttraction.getLocation().getId(), name);
+        return rowsAffected > 0;
     }
 
     public boolean deleteAttraction(String name) {
-        return attractions.removeIf(attraction -> attraction.getName().equalsIgnoreCase(name));
-    }
-
-    public List<String> getCities() {
-        return attractions.stream()
-                .map(TouristAttraction::getLocation)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    public List<String> getTags() {
-        return attractions.stream()
-                .flatMap(attraction -> attraction.getTags().stream())
-                .distinct()
-                .collect(Collectors.toList());
+        String sql = "DELETE FROM TouristAttraction WHERE name = ?";
+        int rowsAffected = jdbcTemplate.update(sql, name);
+        return rowsAffected > 0;
     }
 }
