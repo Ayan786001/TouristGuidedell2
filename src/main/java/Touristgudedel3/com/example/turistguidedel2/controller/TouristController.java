@@ -1,11 +1,11 @@
-package java.com.example.turistguidedel2.controller;
+package Touristgudedel3.com.example.turistguidedel2.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.model.TouristAttraction;
-import java.repository.TouristRepository;
+import Touristgudedel3.model.TouristAttraction;
+import Touristgudedel3.repository.TouristRepository;
 
 import java.util.List;
 import java.util.Optional;

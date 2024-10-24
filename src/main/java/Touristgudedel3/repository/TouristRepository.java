@@ -1,10 +1,12 @@
-package java.repository;
+package Touristgudedel3.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import java.model.TouristAttraction;
-import java.model.Location;
+import Touristgudedel3.model.TouristAttraction;
+import Touristgudedel3.model.Location;
+
+import Touristgudedel3.model.Location;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,12 +46,12 @@ public class TouristRepository {
 
     public void addAttraction(TouristAttraction attraction) {
         String sql = "INSERT INTO TouristAttraction (name, description, entry_fee, location_id) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, attraction.getName(), attraction.getDescription(), attraction.getEntryFee(), attraction.getLocation().getId());
+        jdbcTemplate.update(sql, attraction.getName(), attraction.getDescription(), attraction.getEntryFee(), attraction.getId());
     }
 
     public boolean updateAttraction(String name, TouristAttraction updatedAttraction) {
         String sql = "UPDATE TouristAttraction SET description = ?, entry_fee = ?, location_id = ? WHERE name = ?";
-        int rowsAffected = jdbcTemplate.update(sql, updatedAttraction.getDescription(), updatedAttraction.getEntryFee(), updatedAttraction.getLocation().getId(), name);
+        int rowsAffected = jdbcTemplate.update(sql, updatedAttraction.getDescription(), updatedAttraction.getEntryFee(), updatedAttraction.getId(), name);
         return rowsAffected > 0;
     }
 

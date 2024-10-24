@@ -1,4 +1,4 @@
-package kea.ayan.touristguidedell2;
+package Touristgudedel3;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
