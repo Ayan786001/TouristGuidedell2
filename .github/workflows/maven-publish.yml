@@ -78,13 +78,12 @@ jobs:
         mkdir -p docs/qodana
         cp -r ./qodana-reports/* docs/qodana/
     
-    # Commit the Qodana report to the /docs directory
     - name: Commit Qodana Report
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add docs/qodana
-        git commit -m "Add Qodana static analysis report"
+  run: |
+    git config --local user.email "action@github.com"
+    git config --local user.name "GitHub Action"
+    git diff --quiet || git add docs/qodana
+    git diff --quiet || git commit -m "Add Qodana static analysis report"
 
     # Push the changes back to the repository
     - name: Push changes
