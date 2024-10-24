@@ -79,14 +79,15 @@ jobs:
         cp -r ./qodana-reports/* docs/qodana/
     
     - name: Commit Qodana Report
-  run: |
-    git config --local user.email "action@github.com"
-    git config --local user.name "GitHub Action"
-    git diff --quiet || git add docs/qodana
-    git diff --quiet || git commit -m "Add Qodana static analysis report"
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git diff --quiet || git add docs/qodana
+        git diff --quiet || git commit -m "Add Qodana static analysis report"
 
     # Push the changes back to the repository
     - name: Push changes
-      run: git push
+      run: |
+        git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
