@@ -14,38 +14,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository code
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Checkout the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    # Set up JDK 17 for Maven build
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
-      with:
-        java-version: '17'
+      # Set up JDK 17 for Maven build
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
 
-    # Cache Maven dependencies
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
+      # Cache Maven dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-    # Build the project with Maven
-    - name: Build with Maven
-      run: mvn clean install
+      # Build the project with Maven
+      - name: Build with Maven
+        run: mvn clean install
 
-    # Run Unit Tests
-    - name: Run Unit Tests
-      run: mvn test
+      # Run Unit Tests
+      - name: Run Unit Tests
+        run: mvn test
 
-    # Run Integration Tests with @SpringBootTest
-    - name: Run Integration Tests
-      run: mvn verify
-      env:
-        SPRING_PROFILES_ACTIVE: test
+      # Run Integration Tests with @SpringBootTest
+      - name: Run Integration Tests
+        run: mvn verify
+        env:
+          SPRING_PROFILES_ACTIVE: test
 
   static-code-analysis:
     name: Static Code Analysis with Qodana
@@ -53,37 +53,43 @@ jobs:
     needs: build
 
     steps:
-    # Checkout repository
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Run Qodana Static Analysis
-      uses: JetBrains/qodana-action@v1.0
-      with:
-        project-dir: ./
-        report-dir: ./qodana-reports
-        cache-dir: ./qodana-cache
+      # Run Qodana Static Analysis
+      - name: Run Qodana Static Analysis
+        uses: JetBrains/qodana-action@v1.0
+        with:
+          project-dir: ./
+          report-dir: ./qodana-reports
+          cache-dir: ./qodana-cache
+          # Uncomment the next line if `distribution` is required
+          # distribution: 'your-distribution-value'  # Replace with the actual value
 
-    - name: Upload Qodana Report
-      uses: actions/upload-artifact@v2
-      with:
-        name: qodana-report
-        path: ./qodana-reports
+      # Upload Qodana Report
+      - name: Upload Qodana Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: qodana-report
+          path: ./qodana-reports
 
-    - name: Copy Qodana Report to /docs
-      run: |
-        mkdir -p docs/qodana
-        cp -r ./qodana-reports/* docs/qodana/
-    
-    - name: Commit Qodana Report
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git diff --quiet || git add docs/qodana
-        git diff --quiet || git commit -m "Add Qodana static analysis report"
+      # Copy Qodana Report to /docs
+      - name: Copy Qodana Report to /docs
+        run: |
+          mkdir -p docs/qodana
+          cp -r ./qodana-reports/* docs/qodana/
+      
+      # Commit Qodana Report
+      - name: Commit Qodana Report
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git diff --quiet || git add docs/qodana
+          git diff --quiet || git commit -m "Add Qodana static analysis report"
 
-    - name: Push changes
-      run: |
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+      # Push changes back to the repository
+      - name: Push changes
+        run: git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the default GitHub token
