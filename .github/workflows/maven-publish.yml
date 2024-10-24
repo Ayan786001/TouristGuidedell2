@@ -1,43 +1,93 @@
-name: Java CI with Maven
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    # Checkout the repository code
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
+    # Set up JDK 17 for Maven build
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v1
       with:
         java-version: '17'
 
+    # Cache Maven dependencies
     - name: Cache Maven packages
-      uses: actions/cache@v3
+      uses: actions/cache@v2
       with:
         path: ~/.m2
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
 
+    # Build the project with Maven
     - name: Build with Maven
       run: mvn clean install
 
+    # Run Unit Tests
     - name: Run Unit Tests
       run: mvn test
 
-    - name: Static Code Analysis with Qodana
-      uses: JetBrains/qodana-action@v2024.1
+    # Run Integration Tests with @SpringBootTest
+    - name: Run Integration Tests
+      run: mvn verify
+      env:
+        SPRING_PROFILES_ACTIVE: test
+
+  static-code-analysis:
+    name: Static Code Analysis with Qodana
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    # Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Run Qodana for static analysis
+    - name: Run Qodana Static Analysis
+      uses: JetBrains/qodana-action@v1.0
       with:
-        qodana-cache: '~/.qodana'
-        report-dir: './qodana-report'
-      # You can adjust the options to customize how Qodana runs.
+        project-dir: ./
+        report-dir: ./qodana-reports
+        cache-dir: ./qodana-cache
+
+    # Upload Qodana Report as an artifact
+    - name: Upload Qodana Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: qodana-report
+        path: ./qodana-reports
+
+    # Upload Qodana Report to the /docs directory in the GitHub repo
+    - name: Copy Qodana Report to /docs
+      run: |
+        mkdir -p docs/qodana
+        cp -r ./qodana-reports/* docs/qodana/
+    
+    # Commit the Qodana report to the /docs directory
+    - name: Commit Qodana Report
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/qodana
+        git commit -m "Add Qodana static analysis report"
+
+    # Push the changes back to the repository
+    - name: Push changes
+      run: git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
